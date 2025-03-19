@@ -12,6 +12,7 @@ const Dashboard = () => {
           <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/invoices">Invoices</a></li>
           <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/clients">Clients</a></li>
           <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/reports">Reports</a></li>
+          <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/settings">Settings</a></li> 
         </ul>
       </div>
 
@@ -45,6 +46,9 @@ const Dashboard = () => {
           </a>
           <a href="/reports" className="px-4 py-2 bg-purple-500 text-white rounded-md">
             Generate Report
+          </a>
+          <a href="/settings" className="px-4 py-2 bg-gray-500 text-white rounded-md">
+            Settings
           </a>
         </div>
       </div>
