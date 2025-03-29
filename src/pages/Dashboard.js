@@ -1,56 +1,101 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({ paid: 0, unpaid: 0, overdue: 0, revenue: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/dashboard");
+        const data = await response.json();
+        setStats({
+          paid: data.paidInvoices,
+          unpaid: data.unpaidInvoices,
+          overdue: data.overdueInvoices,
+          revenue: data.revenueTrends,
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const pieData = [
+    { name: "Paid", value: stats.paid, color: "#22C55E" },
+    { name: "Unpaid", value: stats.unpaid, color: "#FACC15" },
+    { name: "Overdue", value: stats.overdue, color: "#EF4444" },
+  ];
+
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gray-100">
       {/* Sidebar */}
       <div className="w-64 bg-gray-800 text-white p-4">
         <h2 className="text-xl font-bold mb-4">Invoice App</h2>
         <ul>
-          <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/">Dashboard</a></li>
-          <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/create-invoice">Create Invoice</a></li>
-          <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/invoices">Invoices</a></li>
-          <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/clients">Clients</a></li>
-          <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/reports">Reports</a></li>
-          <li className="py-2 px-4 hover:bg-gray-700 rounded"><a href="/settings">Settings</a></li> 
+          <li className="py-2 px-4 hover:bg-gray-700 rounded cursor-pointer" onClick={() => navigate("/dashboard")}>Dashboard</li>
+          <li className="py-2 px-4 hover:bg-gray-700 rounded cursor-pointer" onClick={() => navigate("/create-invoice")}>Create Invoice</li>
+          <li className="py-2 px-4 hover:bg-gray-700 rounded cursor-pointer" onClick={() => navigate("/invoices")}>Invoices</li>
+          <li className="py-2 px-4 hover:bg-gray-700 rounded cursor-pointer" onClick={() => navigate("/clients")}>Clients</li>
+          <li className="py-2 px-4 hover:bg-gray-700 rounded cursor-pointer" onClick={() => navigate("/reports")}>Reports</li>
+          <li className="py-2 px-4 hover:bg-gray-700 rounded cursor-pointer" onClick={() => navigate("/settings")}>Settings</li>
+          <li className="py-2 px-4 hover:bg-gray-700 rounded cursor-pointer" onClick={() => navigate("/expense-sheet")}>Expense Sheet</li>
         </ul>
       </div>
 
-      {/* Main Dashboard Content */}
+      {/* Main Content */}
       <div className="flex-1 p-6">
-        <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-        {/* Invoice Overview */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="text-lg font-semibold">Paid Invoices</h3>
-            <p className="text-2xl font-bold text-green-500">$2,500</p>
-          </div>
-          <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="text-lg font-semibold">Unpaid Invoices</h3>
-            <p className="text-2xl font-bold text-yellow-500">$1,200</p>
-          </div>
-          <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="text-lg font-semibold">Overdue Invoices</h3>
-            <p className="text-2xl font-bold text-red-500">$800</p>
-          </div>
-        </div>
+        {loading ? (
+          <p className="text-xl">Loading...</p>
+        ) : (
+          <>
+            {/* Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {pieData.map((data) => (
+                <div key={data.name} className="bg-white p-6 shadow-lg rounded-lg flex flex-col items-center">
+                  <h3 className="text-lg font-semibold">{data.name} Invoices</h3>
+                  <p className="text-2xl font-bold" style={{ color: data.color }}>${data.value}</p>
+                </div>
+              ))}
+            </div>
 
-        {/* Quick Actions */}
-        <div className="mt-6 flex gap-4">
-          <a href="/create-invoice" className="px-4 py-2 bg-blue-500 text-white rounded-md">
-            Create Invoice
-          </a>
-          <a href="/clients" className="px-4 py-2 bg-green-500 text-white rounded-md">
-            View Clients
-          </a>
-          <a href="/reports" className="px-4 py-2 bg-purple-500 text-white rounded-md">
-            Generate Report
-          </a>
-          <a href="/settings" className="px-4 py-2 bg-gray-500 text-white rounded-md">
-            Settings
-          </a>
-        </div>
+            {/* Charts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Pie Chart */}
+              <div className="bg-white p-6 shadow-lg rounded-lg flex justify-center">
+                <PieChart width={300} height={300}>
+                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </div>
+
+              {/* Bar Chart */}
+              <div className="bg-white p-6 shadow-lg rounded-lg">
+                <BarChart width={400} height={300} data={stats.revenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="revenue" fill="#3B82F6" />
+                </BarChart>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

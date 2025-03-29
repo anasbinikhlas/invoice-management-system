@@ -1,54 +1,37 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
 
-    // Dummy login credentials
-    const validEmail = "admin@example.com";
-    const validPassword = "password123";
-
-    if (email === validEmail && password === validPassword) {
-      localStorage.setItem("isAuthenticated", "true"); // Save login state
-      navigate("/dashboard"); // Redirect to dashboard
-    } else {
-      alert("Invalid email or password");
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+      localStorage.setItem("token", res.data.token);
+      navigate("/dashboard"); // Redirect to Dashboard
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full p-2 border rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full p-2 border rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded-md"
-          >
-            Login
-          </button>
+    <div className="flex justify-center items-center min-h-screen">
+      <div className="bg-white p-8 rounded-md shadow-md w-96">
+        <h2 className="text-xl font-bold mb-4">Login</h2>
+        {error && <p className="text-red-500">{error}</p>}
+        <form onSubmit={handleLogin}>
+          <input type="email" placeholder="Email" className="w-full p-2 border rounded mb-2" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Password" className="w-full p-2 border rounded mb-2" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded">Login</button>
         </form>
+        <p className="mt-2">Don't have an account? <a href="/register" className="text-blue-500">Register</a></p>
       </div>
     </div>
   );

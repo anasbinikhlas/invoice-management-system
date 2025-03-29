@@ -1,14 +1,17 @@
 import React, { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Use React Router instead
+import { useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import axios from "axios"; // ✅ Import Axios
 
 const CreateInvoice = () => {
-  const navigate = useNavigate(); // ✅ Use navigate instead of useRouter
+  const navigate = useNavigate();
   const pdfRef = useRef();
   const [items, setItems] = useState([
     { description: "", qty: 1, price: 0, tax: 0, discount: 0, total: 0 },
   ]);
+  const [clientName, setClientName] = useState("");
+  const [companyName, setCompanyName] = useState("");
 
   const updateItem = (index, field, value) => {
     const updatedItems = [...items];
@@ -46,12 +49,29 @@ const CreateInvoice = () => {
   };
 
   const saveAsDraft = () => {
-    localStorage.setItem("draftInvoice", JSON.stringify(items));
+    localStorage.setItem("draftInvoice", JSON.stringify({ clientName, companyName, items }));
     alert("Invoice saved as draft!");
   };
 
-  const sendInvoice = () => {
-    alert("Invoice sent successfully!"); // Simulated send function
+  const sendInvoice = async () => {
+    try {
+      const invoiceData = {
+        clientName,
+        companyName,
+        items,
+        subtotal,
+        totalTax,
+        totalDiscount,
+        grandTotal,
+      };
+
+      const response = await axios.post("http://localhost:5000/api/invoices", invoiceData);
+      alert("Invoice sent successfully!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Error sending invoice:", error);
+      alert("Failed to send invoice. Please try again.");
+    }
   };
 
   return (
@@ -62,11 +82,23 @@ const CreateInvoice = () => {
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <h2 className="text-lg font-semibold">Bill From</h2>
-            <input type="text" placeholder="Your Company Name" className="w-full p-2 border rounded-md mt-1" />
+            <input
+              type="text"
+              placeholder="Your Company Name"
+              className="w-full p-2 border rounded-md mt-1"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+            />
           </div>
           <div>
             <h2 className="text-lg font-semibold">Bill To</h2>
-            <input type="text" placeholder="Client Name" className="w-full p-2 border rounded-md mt-1" />
+            <input
+              type="text"
+              placeholder="Client Name"
+              className="w-full p-2 border rounded-md mt-1"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+            />
           </div>
         </div>
 
@@ -144,7 +176,8 @@ const CreateInvoice = () => {
         </div>
       </div>
 
-      <div className="flex gap-4 mt-4">
+      {/* ✅ Buttons Section Fixed */}
+      <div className="flex gap-4 mt-4 bg-white p-4 shadow-md">
         <button className="px-4 py-2 bg-gray-500 text-white rounded-md" onClick={() => navigate("/dashboard")}>
           Back to Dashboard
         </button>

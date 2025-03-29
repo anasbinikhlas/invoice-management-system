@@ -1,28 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const InvoiceList = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [invoices, setInvoices] = useState([]); // Ensure it's always an array
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Sample invoices (replace with API or state management later)
-  const invoices = [
-    { id: 1, client: "John Doe", date: "2024-03-16", amount: 250, status: "Paid" },
-    { id: 2, client: "Jane Smith", date: "2024-03-15", amount: 400, status: "Unpaid" },
-    { id: 3, client: "Acme Corp", date: "2024-03-14", amount: 800, status: "Overdue" },
-  ];
+  // Fetch invoices from backend
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/invoices"); // Ensure API URL is correct
 
-  // Filtered invoices
-  const filteredInvoices = invoices.filter(
-    (invoice) =>
-      (filter === "All" || invoice.status === filter) &&
-      invoice.client.toLowerCase().includes(search.toLowerCase())
-  );
+        // Ensure data is an array
+        if (Array.isArray(response.data)) {
+          setInvoices(response.data);
+        } else {
+          setError("Invalid data format from API");
+        }
+      } catch (err) {
+        setError("Failed to load invoices. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvoices();
+  }, []);
+
+  // Ensure invoices is an array before filtering
+  const filteredInvoices = Array.isArray(invoices)
+    ? invoices.filter(
+        (invoice) =>
+          (filter === "All" || invoice.status === filter) &&
+          invoice.clientName?.toLowerCase().includes(search.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="p-6 bg-white shadow-md rounded-lg">
       <h1 className="text-2xl font-bold mb-4">Invoices</h1>
+
+      {/* Error Message */}
+      {error && <p className="text-red-500">{error}</p>}
 
       {/* Search & Filters */}
       <div className="flex gap-4 mb-4">
@@ -45,48 +69,52 @@ const InvoiceList = () => {
         </select>
       </div>
 
-      {/* Invoices Table */}
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border p-2">Client</th>
-            <th className="border p-2">Date</th>
-            <th className="border p-2">Amount</th>
-            <th className="border p-2">Status</th>
-            <th className="border p-2">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredInvoices.map((invoice) => (
-            <tr key={invoice.id}>
-              <td className="border p-2">{invoice.client}</td>
-              <td className="border p-2">{invoice.date}</td>
-              <td className="border p-2">${invoice.amount}</td>
-              <td className="border p-2 font-bold text-center">
-                <span
-                  className={
-                    invoice.status === "Paid"
-                      ? "text-green-500"
-                      : invoice.status === "Unpaid"
-                      ? "text-yellow-500"
-                      : "text-red-500"
-                  }
-                >
-                  {invoice.status}
-                </span>
-              </td>
-              <td className="border p-2 text-center">
-                <button
-                  className="px-3 py-1 bg-blue-500 text-white rounded-md"
-                  onClick={() => navigate(`/invoice/${invoice.id}`)}
-                >
-                  View Details
-                </button>
-              </td>
+      {/* Loading State */}
+      {loading ? (
+        <p>Loading invoices...</p>
+      ) : (
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border p-2">Client</th>
+              <th className="border p-2">Date</th>
+              <th className="border p-2">Amount</th>
+              <th className="border p-2">Status</th>
+              <th className="border p-2">Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredInvoices.map((invoice) => (
+              <tr key={invoice._id}>
+                <td className="border p-2">{invoice.clientName || "Unknown"}</td>
+                <td className="border p-2">{new Date(invoice.date).toLocaleDateString()}</td>
+                <td className="border p-2">${invoice.totalAmount}</td>
+                <td className="border p-2 font-bold text-center">
+                  <span
+                    className={
+                      invoice.status === "Paid"
+                        ? "text-green-500"
+                        : invoice.status === "Unpaid"
+                        ? "text-yellow-500"
+                        : "text-red-500"
+                    }
+                  >
+                    {invoice.status}
+                  </span>
+                </td>
+                <td className="border p-2 text-center">
+                  <button
+                    className="px-3 py-1 bg-blue-500 text-white rounded-md"
+                    onClick={() => navigate(`/invoice/${invoice._id}`)}
+                  >
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {/* Navigation Buttons */}
       <div className="flex gap-4 mt-4">
