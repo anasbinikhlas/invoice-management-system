@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const InvoiceDetails = () => {
-  const { id } = useParams(); // Get invoice ID from URL
+  const { id } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,11 +11,12 @@ const InvoiceDetails = () => {
   useEffect(() => {
     const fetchInvoice = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/invoices/${id}`); // Backend API
+        const response = await fetch(`http://localhost:5000/api/invoices/${id}`);
         if (!response.ok) throw new Error("Failed to fetch invoice details");
         const data = await response.json();
         setInvoice(data);
       } catch (error) {
+        console.error("Error fetching invoice:", error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -34,17 +34,21 @@ const InvoiceDetails = () => {
       <h2 className="text-2xl font-semibold mb-4">Invoice Details</h2>
 
       <p><strong>Invoice ID:</strong> {invoice._id}</p>
-      <p><strong>Client:</strong> {invoice.client.name}</p>
-      <p><strong>Status:</strong> {invoice.status}</p>
+      <p><strong>Client:</strong> {invoice.client?.name || "Unknown Client"}</p>
+      <p><strong>Status:</strong> {invoice.status || "Pending"}</p>
       <p><strong>Total Amount:</strong> ${invoice.totalAmount}</p>
 
       <h3 className="text-xl font-semibold mt-6">Items</h3>
       <ul className="list-disc pl-6">
-        {invoice.items.map((item, index) => (
-          <li key={index}>
-            {item.description} - {item.quantity} x ${item.price}
-          </li>
-        ))}
+        {invoice.items && invoice.items.length > 0 ? (
+          invoice.items.map((item, index) => (
+            <li key={index}>
+              {item.description} - {item.quantity} x ${item.price}
+            </li>
+          ))
+        ) : (
+          <p>No items found</p>
+        )}
       </ul>
 
       <div className="flex gap-4 mt-4">
