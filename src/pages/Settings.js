@@ -37,6 +37,7 @@ const Settings = () => {
           <option>USD ($)</option>
           <option>EUR (€)</option>
           <option>GBP (£)</option>
+          <option>PKR (RS)</option>
         </select>
       </label>
 
